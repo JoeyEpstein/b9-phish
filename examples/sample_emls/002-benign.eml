@@ -1,0 +1,8 @@
+From: "Payroll" <payroll@company.example>
+To: you@example.com
+Subject: October update
+Date: Wed, 8 Oct 2025 10:00:00 -0700
+Message-ID: <abcd@company.example>
+Authentication-Results: mx.example.com; spf=pass smtp.mailfrom=company.example; dkim=pass; dmarc=pass
+
+See the portal: https://intranet.company.example/home

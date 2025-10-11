@@ -1,0 +1,8 @@
+From: "Microsoft Security" <support@micr0soft.com>
+To: you@example.com
+Subject: Verify your account immediately
+Date: Tue, 7 Oct 2025 10:00:00 -0700
+Message-ID: <1234@micr0soft.com>
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=micr0soft.com; dkim=none; dmarc=none
+
+Please verify your account at https://security-micr0soft-login.com/login to avoid suspension.

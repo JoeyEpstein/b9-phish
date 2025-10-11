@@ -1,0 +1,19 @@
+thresholds:
+  high: 60
+  review: 35
+
+weights:
+  SPF_FAIL: 35
+  DKIM_FAIL_OR_NODMARC: 25
+  FROM_REPLYTO_MISMATCH: 20
+  LINK_MISMATCH: 20
+  IDN_OR_SUSPICIOUS_TLD: 15
+  DISPLAY_NAME_IMPERSONATION: 20
+  DANGEROUS_ATTACHMENT: 30
+  URGENCY_BAIT: 10
+  NEW_DOMAIN_LOCAL: 10
+  RETURN_PATH_MISMATCH: 10
+
+allowlists:
+  domains: ["github.com", "microsoft.com", "google.com"]
+  senders: []
