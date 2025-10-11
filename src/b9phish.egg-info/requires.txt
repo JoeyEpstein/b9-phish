@@ -1,0 +1,12 @@
+typer
+rich
+pyyaml
+tldextract
+beautifulsoup4
+lxml
+jinja2
+pydantic
+tabulate
+google-api-python-client
+google-auth
+google-auth-oauthlib

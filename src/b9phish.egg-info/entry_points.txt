@@ -1,0 +1,2 @@
+[console_scripts]
+b9 = b9phish.cli:main
