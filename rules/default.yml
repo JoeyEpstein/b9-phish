@@ -1,6 +1,6 @@
 thresholds:
-  high: 60
-  review: 35
+  high: 55
+  review: 30
 
 weights:
   SPF_FAIL: 35
@@ -10,9 +10,9 @@ weights:
   IDN_OR_SUSPICIOUS_TLD: 15
   DISPLAY_NAME_IMPERSONATION: 20
   DANGEROUS_ATTACHMENT: 30
-  URGENCY_BAIT: 10
+  URGENCY_BAIT: 15
   NEW_DOMAIN_LOCAL: 10
-  RETURN_PATH_MISMATCH: 10
+  RETURN_PATH_MISMATCH: 15
 
 allowlists:
   domains: ["github.com", "microsoft.com", "google.com"]
