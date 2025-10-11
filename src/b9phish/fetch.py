@@ -17,7 +17,7 @@ def list_messages(service, query: Optional[str]=None, since: Optional[str]=None,
 def get_message_metadata(service, msg_id: str, full_body: bool=False) -> Dict:
     """Fetch a Gmail message with metadata (headers) and snippet; optionally include body text."""
     fmt = "full" if full_body else "metadata"
-    metadata_headers = ["From","Reply-To","Return-Path","Sender","Subject","Date","Message-ID","Authentication-Results"]
+    metadata_headers = ["From","Reply-To","Return-Path","Sender","Subject","Date","Message-ID","Authentication-Results","In-Reply-To","References"]
     res = service.users().messages().get(userId="me", id=msg_id, format=fmt, metadataHeaders=metadata_headers).execute()
     headers = headers_to_dict(res.get("payload", {}).get("headers", []))
     snippet = res.get("snippet","")

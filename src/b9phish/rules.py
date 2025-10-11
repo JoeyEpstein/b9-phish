@@ -7,6 +7,9 @@ class RuleEngine:
         self.thresholds = thresholds
         self.allowlists = allowlists
 
+    def _w(self, key:str)->int:
+        return int(self.weights.get(key, 0))
+
     @classmethod
     def from_yaml(cls, path: str):
         with open(path, "r", encoding="utf-8") as f:
@@ -25,24 +28,24 @@ class RuleEngine:
 
         # R1 SPF fail
         if auth.get("spf") == "fail":
-            score += self.weights["SPF_FAIL"]; hits.append("SPF_FAIL"); reasons.append("SPF authentication failed.")
+            score += self._w("SPF_FAIL"); hits.append("SPF_FAIL"); reasons.append("SPF authentication failed.")
 
         # R2 DKIM fail or missing & DMARC not enforced
         if (auth.get("dkim") in ("fail","none")) and (auth.get("dmarc") in ("none","neutral")):
-            score += self.weights["DKIM_FAIL_OR_NODMARC"]; hits.append("DKIM_FAIL_OR_NODMARC"); reasons.append("DKIM failed or missing and DMARC not enforced.")
+            score += self._w("DKIM_FAIL_OR_NODMARC"); hits.append("DKIM_FAIL_OR_NODMARC"); reasons.append("DKIM failed or missing and DMARC not enforced.")
 
         # R3 From/Reply-To mismatch (not allowlisted)
         fd, rd = addrs["from"]["domain"], addrs["reply_to"]["domain"]
         if fd and rd and fd != rd and rd not in self.allowlists.get("domains", []):
-            score += self.weights["FROM_REPLYTO_MISMATCH"]; hits.append("FROM_REPLYTO_MISMATCH"); reasons.append(f"From domain ({fd}) differs from Reply-To ({rd}).")
+            score += self._w("FROM_REPLYTO_MISMATCH"); hits.append("FROM_REPLYTO_MISMATCH"); reasons.append(f"From domain ({fd}) differs from Reply-To ({rd}).")
 
         # R4 URL text ≠ URL host – not available without HTML anchors; use deceptive keywords / misc
         if any(s["deceptive_keywords"] for s in url_signals):
-            score += self.weights["LINK_MISMATCH"]; hits.append("LINK_MISMATCH"); reasons.append("Link host contains brand + action keywords (potential deception).")
+            score += self._w("LINK_MISMATCH"); hits.append("LINK_MISMATCH"); reasons.append("Link host contains brand + action keywords (potential deception).")
 
         # R5 Punycode or suspicious TLD
         if any(s["punycode"] or s["suspicious_tld"] for s in url_signals):
-            score += self.weights["IDN_OR_SUSPICIOUS_TLD"]; hits.append("IDN_OR_SUSPICIOUS_TLD"); reasons.append("Internationalized domain or suspicious TLD detected.")
+            score += self._w("IDN_OR_SUSPICIOUS_TLD"); hits.append("IDN_OR_SUSPICIOUS_TLD"); reasons.append("Internationalized domain or suspicious TLD detected.")
 
         # R6 Display-name impersonation (heuristic)
         if features["url_signals"] and features.get("addresses"):
@@ -51,23 +54,41 @@ class RuleEngine:
                 name = features["addresses"]["from"]["name"].lower()
                 dom = features["addresses"]["from"]["domain"].lower()
                 if (("microsoft" in name or "google" in name or "amazon" in name) and (not any(b in dom for b in ("microsoft","google","amazon")))):
-                    score += self.weights["DISPLAY_NAME_IMPERSONATION"]; hits.append("DISPLAY_NAME_IMPERSONATION"); reasons.append("Display name references a brand but domain is unrelated.")
+                    score += self._w("DISPLAY_NAME_IMPERSONATION"); hits.append("DISPLAY_NAME_IMPERSONATION"); reasons.append("Display name references a brand but domain is unrelated.")
 
         # R7 Dangerous attachment types – not available in headers-only path; reserved for EML/full body
         # (Handled when attachments array includes matching ext)
         for att in features.get("attachments",{}).get("dangerous_ext", []):
-            score += self.weights["DANGEROUS_ATTACHMENT"]; hits.append("DANGEROUS_ATTACHMENT"); reasons.append(f"Dangerous attachment type: {att}"); break
+            score += self._w("DANGEROUS_ATTACHMENT"); hits.append("DANGEROUS_ATTACHMENT"); reasons.append(f"Dangerous attachment type: {att}"); break
 
         # R8 Urgency bait
         if flags.get("urgency_bait"):
-            score += self.weights["URGENCY_BAIT"]; hits.append("URGENCY_BAIT"); reasons.append("Subject contains urgency or security-reset phrasing.")
+            score += self._w("URGENCY_BAIT"); hits.append("URGENCY_BAIT"); reasons.append("Subject contains urgency or security-reset phrasing.")
 
         # R9 New domain – placeholder: requires local cache; skip in v0.1
 
         # R10 Return-Path mismatch
         if addrs["return_path"]["domain"] and addrs["from"]["domain"] and addrs["return_path"]["domain"] != addrs["from"]["domain"]:
-            score += self.weights["RETURN_PATH_MISMATCH"]; hits.append("RETURN_PATH_MISMATCH"); reasons.append("Return-Path domain differs from From domain.")
+            score += self._w("RETURN_PATH_MISMATCH"); hits.append("RETURN_PATH_MISMATCH"); reasons.append("Return-Path domain differs from From domain.")
 
+
+        # NEW: Message-ID / domain mismatch (from sender signals)
+        if features.get("sender_signals", {}).get("messageid_mismatch"):
+            score += self._w("MESSAGEID_DOMAIN_MISMATCH"); hits.append("MESSAGEID_DOMAIN_MISMATCH"); reasons.append("Message-ID domain does not match From domain.")
+        # NEW: URL shorteners / redirect-style hosts
+        from .utils import split_host
+        shorteners = {"bit.ly","t.co","lnkd.in","lnk.bio","tinyurl.com","goo.gl","rebrand.ly","bl.ink","buff.ly","shorturl.at","s.id"}
+        if any((split_host(u.get("raw","")) in shorteners) or s.get("shortener") for u,s in zip(features.get("urls",[]), features.get("url_signals",[]))):
+            score += self._w("SHORTENER_OR_REDIRECT"); hits.append("SHORTENER_OR_REDIRECT"); reasons.append("Link uses a URL shortener/redirect service.")
+        # NEW: OAuth consent phishing patterns
+        if any(("oauth2/authorize" in u.get("raw","").lower()) for u in features.get("urls",[])):
+            score += self._w("OAUTH_CONSENT_PHISH"); hits.append("OAUTH_CONSENT_PHISH"); reasons.append("OAuth consent/authorize link present (possible app-grant phish).")
+        # NEW: Port/protocol oddities
+        if any(sig.get("odd_protocol") or sig.get("ip_literal") or sig.get("non_std_port") for sig in features.get("url_signals",[])):
+            score += self._w("PORT_PROTOCOL_ODDITY"); hits.append("PORT_PROTOCOL_ODDITY"); reasons.append("Odd protocol/IP-literal or non-standard port in link.")
+        # NEW: Unicode RLO / zero-width characters in subject
+        if features.get("flags",{}).get("unicode_abuse"):
+            score += self._w("UNICODE_RLO_OR_ZW"); hits.append("UNICODE_RLO_OR_ZW"); reasons.append("Subject contains RLO/zero-width obfuscation characters.")
         severity = "High" if score >= self.thresholds["high"] else ("Review" if score >= self.thresholds["review"] else "Pass")
         return {"score": score, "severity": severity, "rule_hits": hits, "reasons": reasons}
 
