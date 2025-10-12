@@ -1,30 +1,24 @@
 thresholds:
-  high: 60         # raise/lower to tune strictness; try 55 if you want more Highs
+  high: 55
   review: 35
-
 weights:
-  # Existing
   SPF_FAIL: 35
   DKIM_FAIL_OR_NODMARC: 25
   FROM_REPLYTO_MISMATCH: 20
   LINK_MISMATCH: 20
   IDN_OR_SUSPICIOUS_TLD: 15
   DISPLAY_NAME_IMPERSONATION: 20
-  DANGEROUS_ATTACHMENT: 40     # was 30; html/lnk/iso/one/etc. are very risky in 2024–26
-  URGENCY_BAIT: 15             # was 10
-  NEW_DOMAIN_LOCAL: 10         # placeholder until local cache (future)
-  RETURN_PATH_MISMATCH: 15     # was 10
-
-  # New (lightweight, supported today by our extractors)
-  DMARC_ALIGNMENT_FAIL: 25     # rough alignment heuristic from Auth-Results
-  THREAD_HIJACK: 30            # "Re/Fwd:" without In-Reply-To / refs mismatch
-  MESSAGEID_DOMAIN_MISMATCH: 20
-  SHORTENER_OR_REDIRECT: 20    # bit.ly, lnk.bio, redirect=, etc.
-  PORT_PROTOCOL_ODDITY: 25     # data:, file:, mailto: with body, non-https, IP literal
-  BRAND_OFFDOMAIN: 30          # brand keyword + off-brand host (lookalike)
-  OAUTH_CONSENT_PHISH: 40      # oauth2/authorize + suspicious scopes/client
-
-  # New (declared for future extractors; won’t fire until features exist)
+  DANGEROUS_ATTACHMENT: 40
+  URGENCY_BAIT: 15
+  NEW_DOMAIN_LOCAL: 10
+  RETURN_PATH_MISMATCH: 10
+  DMARC_ALIGNMENT_FAIL: 25
+  THREAD_HIJACK: 30
+  MESSAGEID_DOMAIN_MISMATCH: 10
+  SHORTENER_OR_REDIRECT: 20
+  PORT_PROTOCOL_ODDITY: 25
+  BRAND_OFFDOMAIN: 30
+  OAUTH_CONSENT_PHISH: 40
   ARC_INVALID: 15
   IMAGE_ONLY_BODY: 25
   QR_CODE_FOUND: 30
@@ -34,20 +28,42 @@ weights:
   FORM_CRED_HARVEST: 40
   BIMI_EXPECTATION_VIOLATED: 10
   RTL_OVERRIDE_OR_ZW: 25
-
-# Combo rules: extra points when multiple signals co-occur
 combos:
-  - when: ["BRAND_OFFDOMAIN","IDN_OR_SUSPICIOUS_TLD"]
-    bonus: 15
-  - when: ["THREAD_HIJACK","URGENCY_BAIT"]
-    bonus: 15
-  - when: ["OAUTH_CONSENT_PHISH","SHORTENER_OR_REDIRECT"]
-    bonus: 10
-  - when: ["SPF_FAIL","RETURN_PATH_MISMATCH"]
-    bonus: 10
-  - when: ["DMARC_ALIGNMENT_FAIL","MESSAGEID_DOMAIN_MISMATCH"]
-    bonus: 10
-
+- when:
+  - BRAND_OFFDOMAIN
+  - IDN_OR_SUSPICIOUS_TLD
+  bonus: 15
+- when:
+  - THREAD_HIJACK
+  - URGENCY_BAIT
+  bonus: 15
+- when:
+  - OAUTH_CONSENT_PHISH
+  - SHORTENER_OR_REDIRECT
+  bonus: 10
+- when:
+  - SPF_FAIL
+  - RETURN_PATH_MISMATCH
+  bonus: 10
+- when:
+  - DMARC_ALIGNMENT_FAIL
+  - MESSAGEID_DOMAIN_MISMATCH
+  bonus: 10
 allowlists:
-  domains: ["github.com","microsoft.com","google.com"]
+  domains:
+  - amtrak.com
+  - bananarepublic.com
+  - digikey.com
+  - equifax.com
+  - github.com
+  - google.com
+  - indeed.com
+  - lifetime.life
+  - microsoft.com
+  - oldnavy.com
+  - razer.com
+  - samsungcloud.com
+  - seatgeek.com
+  - substack.com
+  - wanderu.com
   senders: []

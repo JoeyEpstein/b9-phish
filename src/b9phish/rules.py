@@ -89,6 +89,12 @@ class RuleEngine:
         # NEW: Unicode RLO / zero-width characters in subject
         if features.get("flags",{}).get("unicode_abuse"):
             score += self._w("UNICODE_RLO_OR_ZW"); hits.append("UNICODE_RLO_OR_ZW"); reasons.append("Subject contains RLO/zero-width obfuscation characters.")
+        # Combo: sender mismatch + auth failure -> stronger signal
+        if (("RETURN_PATH_MISMATCH" in hits or "FROM_REPLYTO_MISMATCH" in hits or "MESSAGEID_DOMAIN_MISMATCH" in hits)
+            and (auth.get("spf") in {"fail","softfail"} or auth.get("dkim")=="fail" or auth.get("dmarc") in {"none","reject"})):
+            score += 10
+            hits.append("COMBO_SENDER_MISMATCH_AUTH")
+            reasons.append("Sender mismatch combined with auth failure.")
         severity = "High" if score >= self.thresholds["high"] else ("Review" if score >= self.thresholds["review"] else "Pass")
         return {"score": score, "severity": severity, "rule_hits": hits, "reasons": reasons}
 
