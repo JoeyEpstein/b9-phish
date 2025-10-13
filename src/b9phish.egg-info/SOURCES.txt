@@ -7,11 +7,14 @@ src/b9phish/cli.py
 src/b9phish/features.py
 src/b9phish/fetch.py
 src/b9phish/gmail_auth.py
+src/b9phish/label_all.py
 src/b9phish/labeler.py
 src/b9phish/outputs.py
 src/b9phish/parse.py
 src/b9phish/rules.py
 src/b9phish/utils.py
+src/b9phish/vt.py
+src/b9phish/vt_apply.py
 src/b9phish.egg-info/PKG-INFO
 src/b9phish.egg-info/SOURCES.txt
 src/b9phish.egg-info/dependency_links.txt

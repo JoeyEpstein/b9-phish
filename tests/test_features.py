@@ -1,5 +1,6 @@
 from b9phish.features import extract_urls, url_heuristics
 
+
 def test_url_extract_and_heuristics():
     txt = "Click https://login.example.zip/reset and https://microsoft-support-verify.example.com now"
     urls = extract_urls(txt)

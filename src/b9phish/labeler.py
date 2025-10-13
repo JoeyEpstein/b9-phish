@@ -1,7 +1,10 @@
 from typing import List, Dict, Any
 from .gmail_auth import _find_label_id, ensure_labels
 
-def apply_labels_for_results(service, alerts: List[Dict[str,Any]], high_label: str, review_label: str):
+
+def apply_labels_for_results(
+    service, alerts: List[Dict[str, Any]], high_label: str, review_label: str
+):
     lid_high = _find_label_id(service, high_label)
     lid_review = _find_label_id(service, review_label)
     if lid_high is None or lid_review is None:
