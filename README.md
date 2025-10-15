@@ -159,6 +159,8 @@ open ./outputs/report.html  # macOS
 # start ./outputs/report.html  # Windows
 ```
 
+> Tip: add `--include-spam` to pull messages from Gmail's Spam/Trash folders when you plan to label everything automatically.
+
 **What you'll see:**
 - 🔴 **High-risk messages** (red) — likely phishing
 - 🟠 **Review needed** (orange) — suspicious patterns
@@ -182,6 +184,9 @@ b9 rules --explain SPF_FAIL
 
 # Scan recent mail
 b9 scan --since 7d --max 100 --out ./outputs
+
+# Scan inbox + spam
+b9 scan --since 7d --max 100 --out ./outputs --include-spam
 
 # Scan with custom Gmail query
 b9 scan --query "from:paypal.com OR from:amazon.com" --out ./outputs
@@ -214,7 +219,7 @@ rm token.json
 b9 init --creds ./credentials.json --scopes modify --create-labels
 
 # Scan and label
-b9 scan --since 7d --out ./outputs
+b9 scan --since 7d --out ./outputs --include-spam
 b9 label --high "🚨 Phishing/Danger" --review "⚠️ Phishing/Review"
 ```
 
@@ -264,7 +269,7 @@ chmod +x monitor.sh
 Or use `cron` (macOS/Linux):
 ```bash
 # Run every 15 minutes
-*/15 * * * * cd /path/to/b9-phish && .venv/bin/b9 scan --since 15m --out ./outputs && .venv/bin/b9 label
+*/15 * * * * cd /path/to/b9-phish && .venv/bin/b9 scan --since 15m --out ./outputs --include-spam && .venv/bin/b9 label
 ```
 
 ---
@@ -421,6 +426,45 @@ pre-commit run --all-files
 b9 scan --eml-dir ./examples/sample_emls --out ./test_outputs
 b9 report --out ./test_outputs/report.html
 ```
+
+### Automate Daily Scans (macOS launchd example)
+
+Want B9-Phish to run on a schedule? Use the provided `scripts/b9phish-pipeline.sh` wrapper with `launchd` on macOS:
+
+```bash
+# Copy the launch agent template to your user LaunchAgents folder
+cp scripts/com.b9phish.pipeline.plist ~/Library/LaunchAgents/
+
+# Load (or reload) the job
+launchctl unload ~/Library/LaunchAgents/com.b9phish.pipeline.plist 2>/dev/null || true
+launchctl load ~/Library/LaunchAgents/com.b9phish.pipeline.plist
+```
+
+Edit the template first to point `ProgramArguments` and `WorkingDirectory` at your local clone (replace `USERNAME/path/to`). Adjust `StartInterval` or use `StartCalendarInterval` for specific times of day.
+
+The pipeline script will:
+
+- Ensure `credentials.json` and `token.json` exist before running
+- Activate `.venv` automatically when present
+- Run `b9 scan` (default: last 1 day, max 200 messages, includes Spam/Trash)
+- Build the HTML report (`outputs/report.html`)
+- Optionally apply Gmail labels when `B9_APPLY_LABELS=true`
+
+Customize behaviour with environment variables inside the plist (or before calling the script):
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `B9_SINCE` | Gmail `--since` window | `1d` |
+| `B9_MAX` | `--max` messages per scan | `200` |
+| `B9_QUERY` | Additional Gmail query filter | *(empty)* |
+| `B9_FULL_BODY` | Set to `true` to include full bodies | `false` |
+| `B9_INCLUDE_SPAM` | Include Gmail Spam/Trash during scans | `true` |
+| `B9_OUTPUT_DIR` | Output directory | `./outputs` |
+| `B9_REPORT_PATH` | Report destination | `./outputs/report.html` |
+| `B9_APPLY_LABELS` | `true` to run `b9 label` | `true` |
+| `B9_HIGH_LABEL` / `B9_REVIEW_LABEL` | Gmail label names | `B9-Phish/High`, `B9-Phish/Review` |
+
+> ℹ️ The script exits early with a helpful message if `credentials.json` or `token.json` are missing, preventing launchd from looping endlessly.
 
 ---
 

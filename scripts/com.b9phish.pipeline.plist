@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.b9phish.pipeline</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/USERNAME/path/to/b9-phish/scripts/b9phish-pipeline.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/USERNAME/path/to/b9-phish</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>B9_SINCE</key>
+        <string>1d</string>
+        <key>B9_MAX</key>
+        <string>200</string>
+        <key>B9_APPLY_LABELS</key>
+        <string>true</string>
+        <key>B9_INCLUDE_SPAM</key>
+        <string>true</string>
+    </dict>
+
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/b9phish.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/b9phish.err.log</string>
+</dict>
+</plist>

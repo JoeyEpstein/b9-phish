@@ -76,6 +76,11 @@ def scan(
     eml_dir: Optional[str] = typer.Option(
         None, "--eml-dir", help="Scan a folder of .eml files instead of Gmail"
     ),
+    include_spam: bool = typer.Option(
+        False,
+        "--include-spam",
+        help="Include messages from Spam/Trash (requires Gmail API includeSpamTrash)",
+    ),
 ):
     """Fetch messages → features → rules → outputs."""
     os.makedirs(out, exist_ok=True)
@@ -99,7 +104,13 @@ def scan(
         except Exception as e:
             print(f"[red]Gmail not initialized:[/] {e}")
             raise typer.Exit(code=2)
-        ids = list_messages(svc, query=query, since=since, max_results=max)
+        ids = list_messages(
+            svc,
+            query=query,
+            since=since,
+            max_results=max,
+            include_spam_trash=include_spam,
+        )
         for mid in ids:
             meta = get_message_metadata(svc, mid, full_body=(full_body or False))
             features = extract_features_from_gmail(meta, headers_only=headers_only)
