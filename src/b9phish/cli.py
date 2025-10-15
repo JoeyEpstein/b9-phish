@@ -5,12 +5,12 @@ from rich import print, box
 from rich.table import Table
 from typing import Optional
 from . import __version__
-from .gmail_auth import build_gmail_service, ensure_labels
+from .gmail_auth import build_gmail_service
+from .labeler import ensure_labels, apply_labels_for_results
 from .fetch import list_messages, get_message_metadata, scan_eml_dir
 from .features import extract_features_from_gmail, extract_features_from_eml
 from .rules import RuleEngine
 from .outputs import OutputManager, build_html_report
-from .labeler import apply_labels_for_results
 
 app = typer.Typer(add_completion=False, help="B9-Phish CLI")
 
